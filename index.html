@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAZA AI - v1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Imported Syncopate for the Main Header -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #050505; 
+            overflow-x: hidden; 
+            margin: 0;
+        }
+
+        /* Animations */
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translateY(40px); filter: blur(10px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+        .animate-element { opacity: 0; animation: slideUpFade 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+        .delay-4 { animation-delay: 0.8s; }
+        .delay-5 { animation-delay: 1.0s; }
+
+        /* Styles */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; }
+        
+        .text-gradient {
+            background: linear-gradient(to right, #d946ef, #8b5cf6, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Main Font Style */
+        .hero-title { font-family: 'Syncopate', sans-serif; letter-spacing: -2px; text-transform: uppercase; }
+
+        .glass-card {
+            background: rgba(18, 18, 23, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-8px);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .tool-btn {
+            background-color: rgba(255, 255, 255, 0.05); color: #ccc; transition: all 0.3s ease;
+        }
+        .tool-btn:hover { background-color: rgba(255, 255, 255, 0.15); color: #fff; padding-right: 2rem; }
+        .tool-btn span { display: inline-block; transition: transform 0.3s ease; }
+        .tool-btn:hover span { transform: translateX(5px); }
+
+        .icon-box { background: radial-gradient(circle at center, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0) 70%); }
+
+        /* Modal Styles */
+        #code-modal { backdrop-filter: blur(10px); background: rgba(0,0,0,0.8); }
+    </style>
+</head>
+<body class="text-white selection:bg-fuchsia-500 selection:text-white">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 px-6 py-6 flex justify-between items-center max-w-7xl mx-auto left-0 right-0 animate-element">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <span class="text-xl font-bold tracking-wide">HAZA AI</span>
+        </div>
+        <div class="hidden md:block">
+            <span class="px-4 py-1.5 rounded-full bg-[#1A1A1A] border border-white/5 text-xs font-semibold text-gray-400 tracking-wider">v1 PRO</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="min-h-screen flex flex-col justify-start items-center px-4 relative z-10 pt-32 pb-20">
+        
+        <!-- Hero Text -->
+        <div class="text-center mb-16 max-w-4xl">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 hero-title animate-element delay-1">
+                <span class="text-gradient">HAZA AI</span> <br> <span class="text-white text-4xl md:text-6xl">Intelligence</span>
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl font-light tracking-wide animate-element delay-2">
+                The Next Generation of Creative Intelligence.
+            </p>
+        </div>
+
+        <!-- Main Tool Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl mb-24">
+            
+            <!-- Image Generator Card -->
+            <div class="glass-card rounded-[32px] p-8 md:p-10 flex flex-col h-full relative overflow-hidden group animate-element delay-3">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -mr-32 -mt-32 transition opacity-0 group-hover:opacity-100"></div>
+                <div class="w-14 h-14 rounded-2xl bg-[#1A1A1A] border border-white/5 flex items-center justify-center mb-6 icon-box">
+                    <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold mb-3 text-white">AI Image Generator</h2>
+                <p class="text-gray-400 mb-8 leading-relaxed text-sm">Create stunning visuals instantly.</p>
+                <div class="mt-auto">
+                    <a href="aiimage.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase tool-btn group-btn">
+                        Open Tool <span class="text-cyan-400">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Chatbot Card -->
+            <div class="glass-card rounded-[32px] p-8 md:p-10 flex flex-col h-full relative overflow-hidden group animate-element delay-4">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-3xl -mr-32 -mt-32 transition opacity-0 group-hover:opacity-100"></div>
+                <div class="w-14 h-14 rounded-2xl bg-[#1A1A1A] border border-white/5 flex items-center justify-center mb-6 icon-box">
+                    <svg class="w-7 h-7 text-fuchsia-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold mb-3 text-white">HAZA Chatbot</h2>
+                <p class="text-gray-400 mb-8 leading-relaxed text-sm">Advanced conversational AI.</p>
+                <div class="mt-auto">
+                    <a href="aichat.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase tool-btn group-btn">
+                        Open Tool <span class="text-fuchsia-400">→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing / Unlock Section -->
+        <div class="w-full max-w-4xl animate-element delay-5">
+            <h3 class="text-2xl font-bold text-center mb-8 uppercase tracking-widest text-gray-500">Unlock Full Potential</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Unlimited Pro -->
+                <div onclick="openModal('unlimited')" class="glass-card rounded-2xl p-6 cursor-pointer border-cyan-500/20 hover:border-cyan-400 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="text-xl font-bold text-white group-hover:text-cyan-400 transition">Buy Pro Version</h4>
+                        <span class="bg-cyan-900/50 text-cyan-300 text-[10px] font-bold px-2 py-1 rounded">UNLIMITED</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-4">Generate unlimited images without restrictions.</p>
+                    <p class="text-xs text-gray-500">Click to get access</p>
+                </div>
+
+                <!-- 5 Images Free -->
+                <div onclick="openModal('limited')" class="glass-card rounded-2xl p-6 cursor-pointer hover:border-purple-400 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="text-xl font-bold text-white group-hover:text-purple-400 transition">Try 5 Images Free</h4>
+                        <span class="bg-purple-900/50 text-purple-300 text-[10px] font-bold px-2 py-1 rounded">TRIAL</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-4">Test the engine with 5 high-quality generations.</p>
+                    <p class="text-xs text-gray-500">Click to get access</p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Code Entry Modal -->
+    <div id="code-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="glass-card bg-[#0f0f10] p-8 rounded-2xl max-w-md w-full border border-gray-700 shadow-2xl transform transition-all scale-100">
+            <h3 id="modal-title" class="text-2xl font-bold mb-2 text-white">Enter Access Code</h3>
+            <p class="text-gray-400 text-sm mb-6">
+                Please contact <span class="text-cyan-400 font-bold select-all">+94 77 131 5403</span> via WhatsApp/SMS to get your code.
+            </p>
+
+            <input type="text" id="access-code" placeholder="Enter Code (e.g., G4F5-TAW8)" 
+                class="w-full bg-black/40 border border-gray-600 rounded-xl px-4 py-3 text-white mb-4 focus:outline-none focus:border-cyan-500 text-center uppercase tracking-widest">
+            
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="w-1/2 py-3 rounded-xl border border-gray-600 text-gray-300 hover:bg-gray-800 transition">Cancel</button>
+                <button onclick="verifyCode()" class="w-1/2 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-cyan-500/20 transition">Verify</button>
+            </div>
+            <p id="error-msg" class="text-red-500 text-xs text-center mt-4 hidden">Invalid Code!</p>
+        </div>
+    </div>
+
+    <script>
+        // ThreeJS Background (Same as before)
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050505, 0.002);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        const geometry = new THREE.BufferGeometry();
+        const posArray = new Float32Array(2100); 
+        for(let i=0; i<2100; i++) posArray[i] = (Math.random() - 0.5) * 35;
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const material = new THREE.PointsMaterial({ size: 0.035, color: 0x8b5cf6, transparent: true, opacity: 0.8 });
+        const starMesh = new THREE.Points(geometry, material);
+        scene.add(starMesh);
+        camera.position.z = 5;
+
+        const animate = () => {
+            requestAnimationFrame(animate);
+            starMesh.rotation.y += 0.0005;
+            starMesh.rotation.x += 0.0002;
+            renderer.render(scene, camera);
+        };
+        animate();
+
+        // --- CODE VERIFICATION LOGIC ---
+        const modal = document.getElementById('code-modal');
+        const codeInput = document.getElementById('access-code');
+        const errorMsg = document.getElementById('error-msg');
+        let currentType = '';
+
+        function openModal(type) {
+            currentType = type;
+            modal.classList.remove('hidden');
+            codeInput.value = '';
+            errorMsg.classList.add('hidden');
+            
+            // Set expected code placeholder logic if needed, but keeping general
+            if(type === 'unlimited') {
+                document.getElementById('modal-title').innerText = "Unlock Pro Version";
+            } else {
+                document.getElementById('modal-title').innerText = "Unlock Free Trial";
+            }
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        function verifyCode() {
+            const code = codeInput.value.trim().toUpperCase();
+            
+            // CODES
+            const UNLIMITED_CODE = "G4F5-TAW8";
+            const LIMITED_CODE = "5IFORF";
+
+            if (currentType === 'unlimited' && code === UNLIMITED_CODE) {
+                localStorage.setItem('haza_credits', '99999'); // Virtually Unlimited
+                alert("Pro Version Unlocked!");
+                window.location.href = 'aiimage.html';
+            } else if (currentType === 'limited' && code === LIMITED_CODE) {
+                // If user already has credits, don't reset unless 0 (Optional, but here we reset to 5)
+                localStorage.setItem('haza_credits', '5'); 
+                alert("5 Free Images Unlocked!");
+                window.location.href = 'aiimage.html';
+            } else {
+                errorMsg.classList.remove('hidden');
+                errorMsg.innerText = "Invalid Code for " + (currentType === 'unlimited' ? "Pro Version" : "Trial");
+            }
+        }
+    </script>
+</body>
+</html>

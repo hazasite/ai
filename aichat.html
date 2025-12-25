@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAZA AI - Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #050505; color: white; height: 100vh; overflow: hidden; }
+        .brand-font { font-family: 'Syncopate', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .glass-header { background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .msg-bot { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 0px 20px 20px 20px; animation: slideInLeft 0.3s ease-out; }
+        .msg-user { background: linear-gradient(135deg, #7c3aed, #2563eb); border-radius: 20px 0px 20px 20px; animation: slideInRight 0.3s ease-out; }
+        .typing-dot { width: 6px; height: 6px; background: #aaa; border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        pre { background: #111 !important; padding: 10px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; margin: 10px 0; }
+        code { font-family: 'Courier New', monospace; font-size: 0.9em; }
+    </style>
+</head>
+<body class="flex flex-col relative">
+
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]">
+        <div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-blue-900/20 rounded-full blur-[100px]"></div>
+    </div>
+
+    <header class="glass-header h-16 flex items-center justify-between px-6 z-20 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <i class="fa-solid fa-robot text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold brand-font tracking-wide">HAZA AI</h1>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-xs text-gray-400">Online</span>
+                </div>
+            </div>
+        </div>
+        <a href="index.html" class="text-gray-400 hover:text-white transition"><i class="fa-solid fa-times text-xl"></i></a>
+    </header>
+
+    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 flex flex-col"></main>
+
+    <footer class="p-4 md:p-6 bg-[#050505] shrink-0">
+        <div class="max-w-4xl mx-auto relative flex items-end gap-3 bg-[#111] border border-gray-700 rounded-2xl p-2 focus-within:border-cyan-500 transition">
+            <textarea id="user-input" rows="1" placeholder="Message HAZA AI..." class="w-full bg-transparent text-white px-4 py-3 focus:outline-none resize-none max-h-32 text-sm"></textarea>
+            <button onclick="sendMessage()" class="bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl w-12 h-11 flex items-center justify-center transition mb-0.5">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+        <p class="text-center text-[10px] text-gray-600 mt-2">HAZA AI can make mistakes. Consider checking important information.</p>
+    </footer>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+
+        window.onload = () => {
+            addMessage("Hello! I am **HAZA AI**. \nI can help you with coding, writing, or just chatting in Sinhala or English.", 'bot');
+        };
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    addMessage(text, 'user');
+    userInput.value = '';
+    userInput.style.height = 'auto';
+
+    const loadingId = showTyping();
+
+    try {
+        // API එකට කෙලින්ම මැසේජ් එක යැවීම
+        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(text)}`;
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.text();
+        removeTyping(loadingId);
+        addMessage(data, 'bot');
+
+    } catch (error) {
+        console.error("Error:", error);
+        removeTyping(loadingId);
+        addMessage("සමාවන්න, සේවාදායකය කාර්යබහුලයි. කරුණාකර පිටුව Refresh කර නැවත උත්සාහ කරන්න.", 'bot');
+    }
+}
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            const isBot = sender === 'bot';
+            div.className = isBot ? 'msg-bot p-4 max-w-[85%] self-start text-gray-200 leading-relaxed text-sm' : 'msg-user p-4 max-w-[85%] ml-auto text-white leading-relaxed text-sm';
+            
+            if (isBot) {
+                marked.setOptions({ breaks: true });
+                div.innerHTML = marked.parse(text);
+            } else {
+                div.innerText = text;
+            }
+            
+            chatContainer.appendChild(div);
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+
+        function showTyping() {
+            const id = 't-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'msg-bot p-4 self-start flex gap-1 items-center h-12 w-20 justify-center';
+            div.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return id;
+        }
+
+        function removeTyping(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAZA Vision - Pro Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #050505; color: white; min-height: 100vh; }
+        .brand-font { font-family: 'Syncopate', sans-serif; }
+        
+        /* Glass Panel */
+        .glass-panel {
+            background: rgba(20, 20, 25, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        /* Custom Radio Buttons for Aspect Ratio */
+        .ratio-btn:checked + div {
+            background: linear-gradient(135deg, #a855f7, #3b82f6);
+            border-color: transparent;
+            color: white;
+        }
+
+        /* Style Chips */
+        .style-chip { transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .style-chip.active { background: #fff; color: #000; border-color: #fff; font-weight: bold; }
+        .style-chip:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+        /* Loading Animation */
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #a855f7;
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Navbar -->
+    <nav class="h-16 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between px-6 shrink-0 z-20">
+        <div class="flex items-center gap-2">
+            <a href="index.html" class="text-xl font-bold brand-font bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">HAZA STUDIO</a>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="bg-gray-900 px-3 py-1 rounded-full border border-gray-700 flex items-center gap-2 text-xs">
+                <i class="fa-solid fa-bolt text-yellow-400"></i>
+                <span class="text-gray-400">CREDITS:</span>
+                <span id="credit-count" class="text-white font-bold">Loading...</span>
+            </div>
+            <a href="index.html" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition">
+                <i class="fa-solid fa-times"></i>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
+        
+        <!-- LEFT PANEL: Controls -->
+        <aside class="w-full md:w-[400px] bg-[#0c0c0e] border-r border-white/5 flex flex-col overflow-y-auto p-6 gap-6 z-10">
+            
+            <!-- Prompt Input -->
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Enter Prompt</label>
+                <textarea id="image-prompt" rows="4" placeholder="A futuristic city with neon lights, flying cars, cyberpunk style..." 
+                    class="w-full bg-[#151518] border border-gray-700 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-purple-500 transition resize-none"></textarea>
+            </div>
+
+            <!-- Aspect Ratio -->
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">Aspect Ratio</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <!-- Square -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="ratio" value="square" class="ratio-btn hidden" checked>
+                        <div class="h-10 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 gap-2 hover:bg-white/5 transition">
+                            <i class="fa-regular fa-square"></i> <span class="text-xs">1:1</span>
+                        </div>
+                    </label>
+                    <!-- Portrait -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="ratio" value="portrait" class="ratio-btn hidden">
+                        <div class="h-10 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 gap-2 hover:bg-white/5 transition">
+                            <i class="fa-solid fa-mobile-screen"></i> <span class="text-xs">9:16</span>
+                        </div>
+                    </label>
+                    <!-- Landscape -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="ratio" value="landscape" class="ratio-btn hidden">
+                        <div class="h-10 rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 gap-2 hover:bg-white/5 transition">
+                            <i class="fa-solid fa-image"></i> <span class="text-xs">16:9</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Style Presets -->
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">Art Style</label>
+                <div class="flex flex-wrap gap-2" id="style-container">
+                    <button class="style-chip active px-3 py-1.5 rounded-full text-xs" onclick="setStyle(this, '')">None</button>
+                    <button class="style-chip px-3 py-1.5 rounded-full text-xs" onclick="setStyle(this, 'Cyberpunk, neon lights, futuristic')">Cyberpunk</button>
+                    <button class="style-chip px-3 py-1.5 rounded-full text-xs" onclick="setStyle(this, 'Anime style, Studio Ghibli, vibrant')">Anime</button>
+                    <button class="style-chip px-3 py-1.5 rounded-full text-xs" onclick="setStyle(this, 'Photorealistic, 8k, highly detailed')">Realistic</button>
+                    <button class="style-chip px-3 py-1.5 rounded-full text-xs" onclick="setStyle(this, '3D Render, Unreal Engine 5, Octane Render')">3D Render</button>
+                    <button class="style-chip px-3 py-1.5 rounded-full text-xs" onclick="setStyle(this, 'Oil painting, classical art, Van Gogh style')">Painting</button>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div class="mt-auto pt-4">
+                <button onclick="attemptGenerate()" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white py-4 rounded-xl font-bold text-sm tracking-widest shadow-lg shadow-purple-500/20 transition transform hover:scale-[1.02]">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> GENERATE
+                </button>
+            </div>
+        </aside>
+
+        <!-- RIGHT PANEL: Preview -->
+        <main class="flex-1 bg-[#050505] relative flex flex-col items-center justify-center p-4 md:p-10 overflow-hidden">
+            
+            <!-- Background Grid Pattern -->
+            <div class="absolute inset-0 z-0 opacity-20" style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="text-center z-10 opacity-50">
+                <i class="fa-solid fa-layer-group text-6xl mb-4 text-gray-600"></i>
+                <p class="text-gray-400 text-sm">Configure settings and click Generate</p>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="hidden flex-col items-center justify-center z-10 text-center">
+                <div class="loader mb-4"></div>
+                <p class="text-purple-400 font-bold tracking-widest text-sm animate-pulse">CREATING MASTERPIECE...</p>
+                <p class="text-gray-500 text-xs mt-2">This may take a few seconds</p>
+            </div>
+
+            <!-- Result State -->
+            <div id="result-container" class="hidden relative z-10 flex-col items-center max-h-full w-full">
+                <div class="glass-panel p-2 rounded-2xl shadow-2xl inline-block max-h-[80vh] overflow-hidden relative group">
+                    <img id="generated-image" src="" alt="AI Art" class="rounded-xl max-h-[75vh] w-auto object-contain">
+                    
+                    <!-- Overlay Buttons (Appear on Hover) -->
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3 backdrop-blur-sm">
+                        <button onclick="downloadImage()" class="bg-white text-black px-6 py-3 rounded-full font-bold text-sm hover:bg-gray-200 transition transform hover:scale-105 shadow-xl">
+                            <i class="fa-solid fa-download mr-2"></i> DOWNLOAD
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile Download Button (Visible below image on small screens) -->
+                <button onclick="downloadImage()" class="md:hidden mt-4 w-full bg-white/10 border border-white/20 py-3 rounded-xl font-bold text-sm">
+                    Download Image
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Out of Credits Modal (Same logic) -->
+    <div id="limit-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-md bg-black/80">
+        <div class="bg-[#111] p-8 rounded-2xl max-w-md w-full border border-red-500/30 shadow-2xl relative">
+            <button onclick="document.getElementById('limit-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            <div class="text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-900/20 mb-4">
+                    <i class="fa-solid fa-lock text-red-500 text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-2 text-white">Limit Reached</h3>
+                <p class="text-gray-400 text-sm mb-6">
+                    Contact <span class="text-cyan-400 font-bold">+94 77 131 5403</span> to unlock more.
+                </p>
+                <input type="text" id="refill-code" placeholder="ENTER CODE" 
+                    class="w-full bg-black/50 border border-gray-700 rounded-lg px-4 py-3 text-white mb-4 focus:border-cyan-500 text-center uppercase tracking-widest text-sm">
+                <button onclick="verifyRefill()" class="w-full py-3 rounded-lg bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold hover:shadow-lg transition text-sm">
+                    UNLOCK
+                </button>
+                <p id="refill-error" class="text-red-500 text-xs mt-3 hidden">Invalid Code!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- STATE MANAGEMENT ---
+        let currentCredits = 0;
+        let selectedStyle = "";
+        let currentImageUrl = "";
+
+        // --- INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCredits();
+        });
+
+        // --- CREDIT SYSTEM ---
+        function loadCredits() {
+            const stored = localStorage.getItem('haza_credits');
+            if (stored === null) {
+                currentCredits = 5;
+                localStorage.setItem('haza_credits', 5);
+            } else {
+                currentCredits = parseInt(stored);
+            }
+            updateCreditUI();
+        }
+
+        function updateCreditUI() {
+            const display = document.getElementById('credit-count');
+            if (currentCredits > 9000) {
+                display.innerText = "UNLIMITED";
+                display.className = "text-green-400 font-bold tracking-wider";
+            } else {
+                display.innerText = currentCredits;
+                display.className = "text-white font-bold";
+            }
+        }
+
+        // --- UI FUNCTIONS ---
+        function setStyle(btn, stylePrompt) {
+            // Remove active class from all
+            document.querySelectorAll('.style-chip').forEach(el => el.classList.remove('active'));
+            // Add to clicked
+            btn.classList.add('active');
+            selectedStyle = stylePrompt;
+        }
+
+        // --- GENERATION LOGIC ---
+        function attemptGenerate() {
+            const promptInput = document.getElementById('image-prompt').value.trim();
+            
+            if (!promptInput) {
+                alert("Please describe what you want to see!");
+                return;
+            }
+
+            if (currentCredits <= 0) {
+                document.getElementById('limit-modal').classList.remove('hidden');
+                return;
+            }
+
+            // Deduct Credit
+            if (currentCredits < 9000) {
+                currentCredits--;
+                localStorage.setItem('haza_credits', currentCredits);
+                updateCreditUI();
+            }
+
+            startGeneration(promptInput);
+        }
+
+        function startGeneration(basePrompt) {
+            const emptyState = document.getElementById('empty-state');
+            const loadingState = document.getElementById('loading-state');
+            const resultContainer = document.getElementById('result-container');
+            const imgElement = document.getElementById('generated-image');
+
+            // UI Updates
+            emptyState.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            loadingState.classList.add('flex');
+
+            // Construct Prompt
+            const finalPrompt = selectedStyle ? `${basePrompt}, ${selectedStyle}` : basePrompt;
+
+            // Dimensions logic
+            const ratio = document.querySelector('input[name="ratio"]:checked').value;
+            let width = 1024, height = 1024;
+            
+            if (ratio === 'portrait') { width = 768; height = 1280; }
+            else if (ratio === 'landscape') { width = 1280; height = 720; }
+
+            const randomSeed = Math.floor(Math.random() * 100000);
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=${width}&height=${height}&seed=${randomSeed}&model=flux&nologo=true`;
+
+            // Load Image
+            const tempImg = new Image();
+            tempImg.onload = function() {
+                currentImageUrl = url; // Save for download
+                imgElement.src = url;
+                loadingState.classList.add('hidden');
+                loadingState.classList.remove('flex');
+                resultContainer.classList.remove('hidden');
+                resultContainer.classList.add('flex');
+            };
+            tempImg.onerror = function() {
+                alert("Failed to generate image. Please try again.");
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            };
+            tempImg.src = url;
+        }
+
+        // --- EASY DOWNLOAD FUNCTION (BLOB METHOD) ---
+        async function downloadImage() {
+            if (!currentImageUrl) return;
+
+            // Change button text temporarily
+            const btns = document.querySelectorAll('button');
+            
+            try {
+                const response = await fetch(currentImageUrl);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = `HAZA_AI_${Date.now()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+            } catch (e) {
+                // Fallback if fetch fails (CORS issues etc)
+                window.open(currentImageUrl, '_blank');
+            }
+        }
+
+        // --- CODE VERIFICATION (Same as before) ---
+        function verifyRefill() {
+            const code = document.getElementById('refill-code').value.trim().toUpperCase();
+            const err = document.getElementById('refill-error');
+            
+            if (code === "G4F5-TAW8") {
+                currentCredits = 99999;
+                localStorage.setItem('haza_credits', currentCredits);
+                document.getElementById('limit-modal').classList.add('hidden');
+                updateCreditUI();
+                alert("Pro Version Unlocked!");
+            } else if (code === "5IFORF") {
+                currentCredits = 5;
+                localStorage.setItem('haza_credits', currentCredits);
+                document.getElementById('limit-modal').classList.add('hidden');
+                updateCreditUI();
+                alert("5 Free Credits Added!");
+            } else {
+                err.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
